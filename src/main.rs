@@ -16,11 +16,10 @@ use vertex::Vertex;
 use obj::Obj;
 use camera::Camera;
 use triangle::triangle;
-use shaders::{vertex_shader, star, dalmata_shader};
+use shaders::{vertex_shader, star, luna, neptuno,  mercurio, earth,saturno,marte,urano1,planetaE1,planetaE2,planetaE3};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
 use fragment::Fragment;
 use color::Color;
-
 
 pub struct Uniforms {
     model_matrix: Mat4,
@@ -198,26 +197,41 @@ fn main() {
     window.set_position(500, 500);
     window.update();
 
-    framebuffer.set_background_color(0x333355);
+    framebuffer.set_background_color(0x000000);
 
     // model positions
-    let translation1 = Vec3::new(-1.5, 0.0, 0.0);
-    let translation2 = Vec3::new(1.5, 0.0, 0.0);
+    let translations = [
+        Vec3::new(-4.5, 0.0, 0.0),
+        Vec3::new(-1.5, 0.0, 0.0),
+        Vec3::new(1.5, 0.0, 0.0),
+        Vec3::new(4.5, 0.0, 0.0),
+        Vec3::new(-4.5, -3.0, 0.0),
+        Vec3::new(1.5, -3.0, 0.0),
+        Vec3::new(4.5, -3.0, 0.0),
+        Vec3::new(0.0, -7.0, 0.0),
+
+        Vec3::new(-4.5, -6.0, 0.0),
+        Vec3::new(1.5, -6.0, 0.0),
+        Vec3::new(4.5, -6.0, 0.0),
+
+    ];
+    
     let rotation = Vec3::new(0.0, 0.0, 0.0);
     let scale = 1.0f32;
 
     // camera parameters
     let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, 5.0),
+        Vec3::new(0.0, 0.0, 15.0),
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0)
     );
 
-    let obj1 = Obj::load("assets/models/esfera.obj").expect("Failed to load obj");
-    let obj2 = Obj::load("assets/models/esfera.obj").expect("Failed to load obj");
+    let obj = Obj::load("assets/models/esfera.obj").expect("Failed to load obj");
+    let obj1 = Obj::load("assets/models/esfera_anillo2.obj").expect("Failed to load obj");
 
+    let vertex_arrays = obj.get_vertex_array();
     let vertex_arrays1 = obj1.get_vertex_array();
-    let vertex_arrays2 = obj2.get_vertex_array();
+
     let mut time = 0;
 
     let noise = create_noise();
@@ -232,6 +246,20 @@ fn main() {
         noise,
     };
 
+    let shaders = [
+        star,
+        earth,
+        mercurio,
+        luna,
+        neptuno,
+        marte,
+        urano1,
+        planetaE1,
+        planetaE2,
+        planetaE3,
+
+    ];
+
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
             break;
@@ -243,19 +271,18 @@ fn main() {
 
         framebuffer.clear();
 
-        // Render first model with "star" shader
-        uniforms.model_matrix = create_model_matrix(translation1, scale, rotation);
-        uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
-        uniforms.time = time;
-        framebuffer.set_current_color(0xFFDDDD);
-        render_with_shader(&mut framebuffer, &uniforms, &vertex_arrays1, star);
+        // Render models with different shaders
+        for (i, translation) in translations.iter().enumerate() {
+            uniforms.model_matrix = create_model_matrix(*translation, scale, rotation);
+            uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
+            uniforms.time = time;
 
-        // Render second model with "dalmata" shader
-        uniforms.model_matrix = create_model_matrix(translation2, scale, rotation);
-        uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
-        uniforms.time = time;
-        framebuffer.set_current_color(0xDDDDFF);
-        render_with_shader(&mut framebuffer, &uniforms, &vertex_arrays2, dalmata_shader);
+            let shader = shaders[i % shaders.len()];
+            render_with_shader(&mut framebuffer, &uniforms, &vertex_arrays, shader);
+
+            
+        }
+        render_with_shader(&mut framebuffer, &uniforms, &vertex_arrays1, saturno);
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)

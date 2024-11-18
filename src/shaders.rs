@@ -47,48 +47,14 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
 }
 
 pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // random_color_shader(fragment, uniforms)
-  // black_and_white(fragment, uniforms)
-  //  (fragment, uniforms)
-  // cloud_shader(fragment, uniforms)
-  // cellular_shader(fragment, uniforms)
-  // cracked_ground_shader(fragment, uniforms)
-  //lava_shader(fragment, uniforms)
   star(fragment, uniforms)
 
 }
 
-fn random_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  let seed = uniforms.time as u64;
 
-  let mut rng = StdRng::seed_from_u64(seed);
 
-  let r = rng.gen_range(0..=255);
-  let g = rng.gen_range(0..=255);
-  let b = rng.gen_range(0..=255);
-
-  let random_color = Color::new(r, g, b);
-
-  random_color * fragment.intensity
-}
-
-fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  let seed = uniforms.time as f32 * fragment.vertex_position.y * fragment.vertex_position.x;
-
-  let mut rng = StdRng::seed_from_u64(seed.abs() as u64);
-
-  let random_number = rng.gen_range(0..=100);
-
-  let black_or_white = if random_number < 50 {
-    Color::new(0, 0, 0)
-  } else {
-    Color::new(255, 255, 255)
-  };
-
-  black_or_white * fragment.intensity
-}
-
-pub fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn mercurio(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  //152, 221, 255
   let zoom = 100.0;
   let ox = 0.0;
   let oy = 0.0;
@@ -101,8 +67,34 @@ pub fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   );
 
   let spot_threshold = 0.5;
-  let spot_color = Color::new(255, 255, 255); // White
-  let base_color = Color::new(0, 0, 0); // Black
+  let spot_color = Color::new(223, 223, 223); // gris
+  let base_color = Color::new(  223, 223, 223); // gris
+  let noise_color = if noise_value < spot_threshold {
+    spot_color
+  } else {
+    base_color
+  };
+
+  noise_color * fragment.intensity
+}
+
+
+pub fn neptuno(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  //152, 221, 255
+  let zoom = 100.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+    (x + ox) * zoom,
+    (y + oy) * zoom,
+  );
+
+  let spot_threshold = 0.5;
+  let spot_color = Color::new(152, 221, 255); // 
+  let base_color = Color::new(152, 221, 255); // 
 
   let noise_color = if noise_value < spot_threshold {
     spot_color
@@ -113,61 +105,33 @@ pub fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   noise_color * fragment.intensity
 }
 
-fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  let zoom = 100.0;  // to move our values 
-  let ox = 100.0; // offset x in the noise map
-  let oy = 100.0;
+
+pub fn luna(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 100.0;
+  let ox = 0.0;
+  let oy = 0.0;
   let x = fragment.vertex_position.x;
   let y = fragment.vertex_position.y;
-  let t = uniforms.time as f32 * 0.5;
 
-  let noise_value = uniforms.noise.get_noise_2d(x * zoom + ox + t, y * zoom + oy);
+  let noise_value = uniforms.noise.get_noise_2d(
+    (x + ox) * zoom,
+    (y + oy) * zoom,
+  );
 
-  // Define cloud threshold and colors
-  let cloud_threshold = 0.5; // Adjust this value to change cloud density
-  let cloud_color = Color::new(255, 255, 255); // White for clouds
-  let sky_color = Color::new(30, 97, 145); // Sky blue
+  let spot_threshold = 0.5;
+  let spot_color = Color::new(135, 135, 135); // gris oscuro
+  let base_color = Color::new(191, 191, 191); // Black
 
-  // Determine if the pixel is part of a cloud or sky
-  let noise_color = if noise_value > cloud_threshold {
-    cloud_color
+  let noise_color = if noise_value < spot_threshold {
+    spot_color
   } else {
-    sky_color
+    base_color
   };
 
   noise_color * fragment.intensity
 }
 
-fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  let zoom = 30.0;  // Zoom factor to adjust the scale of the cell pattern
-  let ox = 50.0;    // Offset x in the noise map
-  let oy = 50.0;    // Offset y in the noise map
-  let x = fragment.vertex_position.x;
-  let y = fragment.vertex_position.y;
 
-  // Use a cellular noise function to create the plant cell pattern
-  let cell_noise_value = uniforms.noise.get_noise_2d(x * zoom + ox, y * zoom + oy).abs();
-
-  // Define different shades of green for the plant cells
-  let cell_color_1 = Color::new(85, 107, 47);   // Dark olive green
-  let cell_color_2 = Color::new(124, 252, 0);   // Light green
-  let cell_color_3 = Color::new(34, 139, 34);   // Forest green
-  let cell_color_4 = Color::new(173, 255, 47);  // Yellow green
-
-  // Use the noise value to assign a different color to each cell
-  let final_color = if cell_noise_value < 0.15 {
-    cell_color_1
-  } else if cell_noise_value < 0.7 {
-    cell_color_2
-  } else if cell_noise_value < 0.75 {
-    cell_color_3
-  } else {
-    cell_color_4
-  };
-
-  // Adjust intensity to simulate lighting effects (optional)
-  final_color * fragment.intensity
-}
 
 pub fn star(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para el efecto de la estrella
@@ -209,4 +173,193 @@ pub fn star(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let color = dark_color.lerp(&bright_color, noise_value);
 
   color * fragment.intensity
+}
+
+pub fn earth(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 30.0;  // Zoom factor to adjust the scale of the cell pattern
+  let ox = 50.0;    // Offset x in the noise map
+  let oy = 50.0;    // Offset y in the noise map
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+  let t = uniforms.time as f32 * 0.5;
+
+  // Use a cellular noise function to create the plant cell pattern
+  let cell_noise_value = uniforms.noise.get_noise_2d(x * zoom + ox, y * zoom + oy).abs();
+
+  // Define different shades of green for the plant cells
+  let base_color = if cell_noise_value < 0.15 {
+      Color::new(85, 107, 47)   // Dark olive green
+  } else if cell_noise_value < 0.7 {
+      Color::new(2, 100, 177)   // Celeste
+  } else if cell_noise_value < 0.75 {
+      Color::new(85, 107, 47)   // Forest green
+  } else {
+      Color::new(133, 98, 57)   // Cafe
+  };
+
+  // Add cloud effect with blending
+  let cloud_zoom = 100.0;  // to move our values 
+  let cloud_ox = 100.0; // offset x in the noise map
+  let cloud_oy = 100.0;
+  let cloud_noise_value = uniforms.noise.get_noise_2d(x * cloud_zoom + cloud_ox + t, y * cloud_zoom + cloud_oy);
+  let cloud_threshold = 0.5; // Adjust this value to change cloud density
+  let cloud_color = Color::new(255, 255, 255); // White for clouds
+
+  let blended_color = if cloud_noise_value > cloud_threshold {
+      // Blend the cloud color with the base color using a blending factor to keep the base visible
+      base_color.blend_normal(&cloud_color) * 0.5 + base_color * 0.5
+  } else {
+      base_color
+  };
+
+  // Adjust intensity to simulate lighting effects (optional)
+  blended_color * fragment.intensity
+}
+
+pub fn saturno(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 50.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+      (y + oy) * zoom,
+      (ox) * zoom,
+  );
+
+  let spot_threshold = 0.0;
+  let spot_color = Color::new(255, 233, 11); //amarillo-naranja
+  let base_color = Color::new(224, 142, 104);       // naranja
+
+  let noise_color = if noise_value.sin() > spot_threshold {
+      spot_color
+  } else {
+      base_color
+  };
+
+  noise_color * fragment.intensity
+}
+
+
+pub fn marte(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 50.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+      (y + oy) * zoom,
+      (ox) * zoom,
+  );
+
+  let spot_threshold = 0.0;
+  let spot_color = Color::new(143, 78, 54); //amarillo-naranja
+  let base_color = Color::new(204, 22, 0);       // naranja
+
+  let noise_color = if noise_value.sin() > spot_threshold {
+      spot_color
+  } else {
+      base_color
+  };
+
+  noise_color * fragment.intensity
+}
+
+
+pub fn urano1(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 50.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+      (y + oy) * zoom,
+      (ox) * zoom,
+  );
+
+  let spot_threshold = 0.0;
+  let spot_color = Color::new(0, 255, 212); //celeste claro
+  let base_color = Color::new(0, 220, 255);       // celeste
+
+  let noise_color = if noise_value.sin() > spot_threshold {
+      spot_color
+  } else {
+      base_color
+  };
+
+  noise_color * fragment.intensity
+}
+
+
+pub fn planetaE1(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 50.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+      (y + oy) * zoom,
+      (ox) * zoom,
+  );
+
+  let spot_threshold = 0.0;
+  let spot_color = Color::new(131, 255, 0); //celeste claro
+  let base_color = Color::new(131, 255, 0);       // celeste
+
+  let noise_color = if noise_value.sin() > spot_threshold {
+      spot_color
+  } else {
+      base_color
+  };
+
+  noise_color * fragment.intensity
+}
+
+
+pub fn planetaE2(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 50.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+      (y + oy) * zoom,
+      (ox) * zoom,
+  );
+
+  let spot_threshold = 0.0;
+  let spot_color = Color::new(255, 0, 243); 
+  let base_color = Color::new(255, 0, 243);       
+
+  let noise_color = if noise_value.sin() > spot_threshold {
+      spot_color
+  } else {
+      base_color
+  };
+
+  noise_color * fragment.intensity
+}
+
+pub fn planetaE3(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let zoom = 50.0;
+  let ox = 0.0;
+  let oy = 0.0;
+  let y = fragment.vertex_position.y;
+
+  let noise_value = uniforms.noise.get_noise_2d(
+      (y + oy) * zoom,
+      (ox) * zoom,
+  );
+
+  let spot_threshold = 0.0;
+  let spot_color = Color::new(166, 0, 255); 
+  let base_color = Color::new(166, 0, 255);       
+
+  let noise_color = if noise_value.sin() > spot_threshold {
+      spot_color
+  } else {
+      base_color
+  };
+
+  noise_color * fragment.intensity
 }
